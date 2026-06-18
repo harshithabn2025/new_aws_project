@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Add Maintenance Log</h2>
+
+<div class="card">
+    <p><strong>Equipment:</strong> {{ equipment.equipment_name }} ({{ equipment.serial_number }})</p>
+</div>
+
+<form method="POST" class="card">
+    <label>Maintenance Date</label>
+    <input type="date" name="maintenance_date" required>
+
+    <label>Technician Name</label>
+    <input type="text" name="technician_name" required>
+
+    <label>Issue Reported</label>
+    <textarea name="issue_reported" required></textarea>
+
+    <label>Resolution Notes</label>
+    <textarea name="resolution_notes" required></textarea>
+
+    <label>Next Due Date</label>
+    <input type="date" name="next_due_date" required>
+
+    <button type="submit">Add Maintenance</button>
+</form>
+{% endblock %}

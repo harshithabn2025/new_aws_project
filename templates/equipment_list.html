@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Equipment List</h2>
+
+<form method="GET" class="card">
+    <label>Department:</label>
+    <select name="department">
+        <option value="">All</option>
+        {% for dept in departments %}
+            <option value="{{ dept.department }}" {% if selected_department == dept.department %}selected{% endif %}>
+                {{ dept.department }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <label>Status:</label>
+    <select name="status">
+        <option value="">All</option>
+        <option value="Active" {% if selected_status == 'Active' %}selected{% endif %}>Active</option>
+        <option value="Under Maintenance" {% if selected_status == 'Under Maintenance' %}selected{% endif %}>Under Maintenance</option>
+        <option value="Decommissioned" {% if selected_status == 'Decommissioned' %}selected{% endif %}>Decommissioned</option>
+    </select>
+
+    <button type="submit">Filter</button>
+</form>
+
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Serial</th>
+        <th>Department</th>
+        <th>Purchase Date</th>
+        <th>Status</th>
+    </tr>
+    {% for item in equipment %}
+    <tr>
+        <td>{{ item.equipment_id }}</td>
+        <td><a href="{{ url_for('equipment_detail', equipment_id=item.equipment_id) }}">{{ item.equipment_name }}</a></td>
+        <td>{{ item.serial_number }}</td>
+        <td>{{ item.department }}</td>
+        <td>{{ item.purchase_date }}</td>
+        <td>{{ item.status }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}
