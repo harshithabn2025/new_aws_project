@@ -1,82 +1,27 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Equipment</title>
+</head>
+<body>
 
-{% block content %}
+<h2>Add Equipment</h2>
 
-<div class="card shadow">
+<form method="POST">
 
-    <div class="card-header bg-success text-white">
-        <h3>Add New Equipment</h3>
-    </div>
+    <input type="text" name="name" placeholder="Equipment Name" required>
+    <br><br>
 
-    <div class="card-body">
+    <input type="number" name="quantity" placeholder="Quantity" required>
+    <br><br>
 
-        <form method="POST">
+    <button type="submit">Add</button>
 
-            <div class="mb-3">
-                <label class="form-label">Equipment Name</label>
-                <input type="text"
-                       name="equipment_name"
-                       class="form-control"
-                       required>
-            </div>
+</form>
 
-            <div class="mb-3">
-                <label class="form-label">Serial Number</label>
-                <input type="text"
-                       name="serial_number"
-                       class="form-control"
-                       required>
-            </div>
+<br>
 
-            <div class="mb-3">
-                <label class="form-label">Department</label>
-                <select name="department"
-                        class="form-control"
-                        required>
+<a href="{{ url_for('home') }}">Back to Dashboard</a>
 
-                    <option>ICU</option>
-                    <option>Emergency</option>
-                    <option>Pediatrics</option>
-                    <option>Radiology</option>
-                    <option>Operation Theatre</option>
-
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Purchase Date</label>
-                <input type="date"
-                       name="purchase_date"
-                       class="form-control"
-                       required>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Status</label>
-
-                <select name="status"
-                        class="form-control">
-
-                    <option>Active</option>
-                    <option>Under Maintenance</option>
-                    <option>Decommissioned</option>
-
-                </select>
-
-            </div>
-
-            <button class="btn btn-success">
-                Save Equipment
-            </button>
-
-            <a href="/" class="btn btn-secondary">
-                Cancel
-            </a>
-
-        </form>
-
-    </div>
-
-</div>
-
-{% endblock %}
+</body>
+</html>
