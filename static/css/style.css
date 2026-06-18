@@ -1,57 +1,81 @@
-body{
-    background:#f4f7fa;
-    font-family:Arial, Helvetica, sans-serif;
+body {
+    background: #f4f7fa;
+    font-family: Arial, Helvetica, sans-serif;
 }
 
-.navbar{
-    margin-bottom:20px;
+/* Navbar spacing */
+.navbar {
+    margin-bottom: 20px;
 }
 
-.card{
-    border:none;
-    border-radius:10px;
-    box-shadow:0 0 10px rgba(0,0,0,0.1);
+/* Card UI */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
-.card-header{
-    font-size:20px;
-    font-weight:bold;
+/* Card header */
+.card-header {
+    font-size: 20px;
+    font-weight: bold;
 }
 
-table{
-    background:white;
+/* Table styling */
+table {
+    background: white;
+    width: 100%;
+    border-collapse: collapse;
 }
 
-th{
-    text-align:center;
+th {
+    text-align: center;
+    padding: 10px;
 }
 
-td{
-    vertical-align:middle;
+td {
+    vertical-align: middle;
+    padding: 10px;
 }
 
-.btn{
-    margin:2px;
+/* Buttons spacing */
+.btn {
+    margin: 2px;
 }
 
-h2{
-    color:#0d6efd;
-    font-weight:bold;
+/* Heading */
+h2 {
+    color: #0d6efd;
+    font-weight: bold;
 }
 
-.badge{
-    font-size:14px;
-    padding:8px;
+/* Badge styling */
+.badge {
+    font-size: 14px;
+    padding: 6px 10px;
+    border-radius: 8px;
 }
 
-.container{
-    margin-top:20px;
+/* Container spacing */
+.container {
+    margin-top: 20px;
 }
 
-form label{
-    font-weight:bold;
+/* Form labels */
+form label {
+    font-weight: bold;
 }
 
-.table-hover tbody tr:hover{
-    background:#f1f8ff;
+/* Table hover effect */
+.table-hover tbody tr:hover {
+    background: #f1f8ff;
+}
+
+/* Links */
+a {
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
 }

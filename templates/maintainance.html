@@ -2,9 +2,7 @@
 
 {% block content %}
 
-<h2 class="mb-4">
-Maintenance History
-</h2>
+<h2 class="mb-4">Maintenance History</h2>
 
 <div class="card mb-4">
 
@@ -14,97 +12,56 @@ Maintenance History
 
     <div class="card-body">
 
-        <p><strong>Name:</strong> {{ equipment.equipment_name }}</p>
+        <p><strong>Name:</strong> {{ equipment.equipment_name or 'N/A' }}</p>
 
-        <p><strong>Serial Number:</strong> {{ equipment.serial_number }}</p>
+        <p><strong>Serial Number:</strong> {{ equipment.serial_number or 'N/A' }}</p>
 
-        <p><strong>Department:</strong> {{ equipment.department }}</p>
+        <p><strong>Department:</strong> {{ equipment.department or 'N/A' }}</p>
 
-        <p><strong>Status:</strong> {{ equipment.status }}</p>
+        <p><strong>Status:</strong> {{ equipment.status or 'N/A' }}</p>
 
     </div>
 
 </div>
 
-
+<!-- ADD MAINTENANCE -->
 <div class="card mb-4">
 
     <div class="card-header bg-success text-white">
-
         Add Maintenance Record
-
     </div>
 
     <div class="card-body">
 
         <form method="POST"
-              action="/add_log/{{ equipment.equipment_id }}">
+              action="{{ url_for('add_log', id=equipment.equipment_id) }}">
 
             <div class="mb-3">
-
                 <label>Maintenance Date</label>
-
-                <input
-                    type="date"
-                    name="maintenance_date"
-                    class="form-control"
-                    required>
-
+                <input type="date" name="maintenance_date" class="form-control" required>
             </div>
 
             <div class="mb-3">
-
                 <label>Technician Name</label>
-
-                <input
-                    type="text"
-                    name="technician_name"
-                    class="form-control"
-                    required>
-
+                <input type="text" name="technician_name" class="form-control" required>
             </div>
 
             <div class="mb-3">
-
                 <label>Issue Reported</label>
-
-                <textarea
-                    name="issue_reported"
-                    class="form-control"
-                    rows="3"
-                    required></textarea>
-
+                <textarea name="issue_reported" class="form-control" rows="3" required></textarea>
             </div>
 
             <div class="mb-3">
-
                 <label>Resolution Notes</label>
-
-                <textarea
-                    name="resolution_notes"
-                    class="form-control"
-                    rows="3"
-                    required></textarea>
-
+                <textarea name="resolution_notes" class="form-control" rows="3" required></textarea>
             </div>
 
             <div class="mb-3">
-
                 <label>Next Due Date</label>
-
-                <input
-                    type="date"
-                    name="next_due_date"
-                    class="form-control"
-                    required>
-
+                <input type="date" name="next_due_date" class="form-control" required>
             </div>
 
-            <button class="btn btn-success">
-
-                Add Record
-
-            </button>
+            <button class="btn btn-success">Add Record</button>
 
         </form>
 
@@ -112,52 +69,38 @@ Maintenance History
 
 </div>
 
-
-<h3>
-
-Maintenance Logs
-
-</h3>
+<!-- LOGS -->
+<h3>Maintenance Logs</h3>
 
 <table class="table table-bordered table-hover">
 
     <thead class="table-dark">
-
         <tr>
-
             <th>Date</th>
-
             <th>Technician</th>
-
             <th>Issue</th>
-
             <th>Resolution</th>
-
             <th>Next Due</th>
-
         </tr>
-
     </thead>
 
     <tbody>
 
-        {% for log in logs %}
-
-        <tr>
-
-            <td>{{ log.maintenance_date }}</td>
-
-            <td>{{ log.technician_name }}</td>
-
-            <td>{{ log.issue_reported }}</td>
-
-            <td>{{ log.resolution_notes }}</td>
-
-            <td>{{ log.next_due_date }}</td>
-
-        </tr>
-
-        {% endfor %}
+        {% if logs %}
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.maintenance_date }}</td>
+                <td>{{ log.technician_name }}</td>
+                <td>{{ log.issue_reported }}</td>
+                <td>{{ log.resolution_notes }}</td>
+                <td>{{ log.next_due_date }}</td>
+            </tr>
+            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="5" class="text-center">No maintenance logs found</td>
+            </tr>
+        {% endif %}
 
     </tbody>
 
