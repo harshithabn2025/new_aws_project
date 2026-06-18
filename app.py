@@ -9,7 +9,7 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
 
-# Connect to MySQL
+# Database connection
 try:
     db = mysql.connector.connect(
         host=os.getenv("DB_HOST"),
@@ -25,11 +25,9 @@ except mysql.connector.Error as err:
     print("❌ Database connection failed:")
     print(err)
 
-# Home Route
 @app.route("/")
 def home():
-    return "Flask App is Running Successfully!"
+    return render_template("index.html")
 
-# Start Flask Server
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
