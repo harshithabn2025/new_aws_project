@@ -1,197 +1,219 @@
-import os
-import uuid
-from flask import Flask, render_template, request, redirect, url_for
-from flask_mysqldb import MySQL
 from dotenv import load_dotenv
-import boto3
-from botocore.config import Config
-from werkzeug.utils import secure_filename
+import os
 
 load_dotenv()
 
-app = Flask(__name__)
-
-# MySQL Configuration
-app.config['MYSQL_HOST'] = os.getenv('MYSQL_HOST')
-app.config['MYSQL_USER'] = os.getenv('MYSQL_USER')
-app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD')
-app.config['MYSQL_DB'] = os.getenv('MYSQL_DB')
-app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
-app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB limit
-
-mysql = MySQL(app)
-
-# S3 Configuration — credentials come from EC2 IAM role automatically
-S3_BUCKET = os.getenv('S3_BUCKET')
-AWS_REGION = os.getenv('AWS_REGION', 'ap-south-1')
-
-# Resolve the bucket's actual region, then build the client with SigV4 + virtual-hosted style
-# SigV4 + virtual-hosted style is required for presigned URLs on non-us-east-1 buckets
-_s3_probe = boto3.client('s3', region_name='us-east-1')
-try:
-    _loc = _s3_probe.get_bucket_location(Bucket=S3_BUCKET)
-    AWS_REGION = _loc['LocationConstraint'] or 'us-east-1'
-except Exception:
-    pass  # fall back to env value
-
-_s3_config = Config(
-    signature_version='s3v4',
-    s3={'addressing_style': 'virtual'}
+db = mysql.connector.connect(
+    host=os.getenv("DB_HOST"),
+    user=os.getenv("DB_USER"),
+    password=os.getenv("DB_PASSWORD"),
+    database=os.getenv("DB_NAME")
 )
-s3 = boto3.client('s3', region_name=AWS_REGION, config=_s3_config)
 
-ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-ALLOWED_RESUME_EXTENSIONS = {'pdf', 'doc', 'docx'}
+cursor = db.cursor(dictionary=True)
 
 
-def allowed_image(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
+# Home Page
+@app.route('/')
+def index():
+
+    department = request.args.get('department')
+    status = request.args.get('status')
+
+    query = "SELECT * FROM equipment WHERE 1=1"
+    values = []
+
+    if department:
+        query += " AND department=%s"
+        values.append(department)
+
+    if status:
+        query += " AND status=%s"
+        values.append(status)
+
+    cursor.execute(query, values)
+    equipment = cursor.fetchall()
+
+    return render_template("index.html", equipment=equipment)
 
 
-def allowed_resume(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_RESUME_EXTENSIONS
+# Add Equipment
+@app.route('/add', methods=['GET', 'POST'])
+def add():
+
+    if request.method == 'POST':
+
+        equipment_name = request.form['equipment_name']
+        serial_number = request.form['serial_number']
+        department = request.form['department']
+        purchase_date = request.form['purchase_date']
+        status = request.form['status']
+
+        sql = """
+        INSERT INTO equipment
+        (equipment_name, serial_number, department, purchase_date, status)
+        VALUES (%s,%s,%s,%s,%s)
+        """
+
+        values = (
+            equipment_name,
+            serial_number,
+            department,
+            purchase_date,
+            status
+        )
+
+        cursor.execute(sql, values)
+        db.commit()
+
+        return redirect('/')
+
+    return render_template("add.html")
 
 
-def upload_to_s3(file, folder):
-    key = f"{folder}/{uuid.uuid4().hex}_{secure_filename(file.filename)}"
-    content_type = file.content_type or 'application/octet-stream'
-    s3.upload_fileobj(file, S3_BUCKET, key, ExtraArgs={'ContentType': content_type})
-    return key
+# Edit Equipment
+@app.route('/edit/<int:id>', methods=['GET', 'POST'])
+def edit(id):
+
+    if request.method == 'POST':
+
+        equipment_name = request.form['equipment_name']
+        serial_number = request.form['serial_number']
+        department = request.form['department']
+        purchase_date = request.form['purchase_date']
+        status = request.form['status']
+
+        sql = """
+        UPDATE equipment
+        SET equipment_name=%s,
+        serial_number=%s,
+        department=%s,
+        purchase_date=%s,
+        status=%s
+        WHERE equipment_id=%s
+        """
+
+        cursor.execute(sql, (
+            equipment_name,
+            serial_number,
+            department,
+            purchase_date,
+            status,
+            id
+        ))
+
+        db.commit()
+
+        return redirect('/')
+
+    cursor.execute("SELECT * FROM equipment WHERE equipment_id=%s", (id,))
+    equipment = cursor.fetchone()
+
+    return render_template("edit.html", equipment=equipment)
 
 
-def presigned_url(key, expiry=3600):
-    if not key:
-        return None
-    return s3.generate_presigned_url(
-        'get_object',
-        Params={'Bucket': S3_BUCKET, 'Key': key},
-        ExpiresIn=expiry
+# Delete Equipment
+@app.route('/delete/<int:id>')
+def delete(id):
+
+    cursor.execute("DELETE FROM equipment WHERE equipment_id=%s", (id,))
+    db.commit()
+
+    return redirect('/')
+
+
+# Maintenance History
+@app.route('/maintenance/<int:id>')
+def maintenance(id):
+
+    cursor.execute("SELECT * FROM equipment WHERE equipment_id=%s", (id,))
+    equipment = cursor.fetchone()
+
+    cursor.execute("""
+    SELECT * FROM maintenance_log
+    WHERE equipment_id=%s
+    ORDER BY maintenance_date DESC
+    """, (id,))
+
+    logs = cursor.fetchall()
+
+    return render_template(
+        "maintenance.html",
+        equipment=equipment,
+        logs=logs
     )
 
 
-def create_tables():
-    cursor = mysql.connection.cursor()
+# Add Maintenance Record
+@app.route('/add_log/<int:id>', methods=['POST'])
+def add_log(id):
+
+    maintenance_date = request.form['maintenance_date']
+    technician_name = request.form['technician_name']
+    issue_reported = request.form['issue_reported']
+    resolution_notes = request.form['resolution_notes']
+    next_due_date = request.form['next_due_date']
+
+    sql = """
+    INSERT INTO maintenance_log
+    (equipment_id,
+    maintenance_date,
+    technician_name,
+    issue_reported,
+    resolution_notes,
+    next_due_date)
+    VALUES(%s,%s,%s,%s,%s,%s)
+    """
+
+    cursor.execute(sql, (
+        id,
+        maintenance_date,
+        technician_name,
+        issue_reported,
+        resolution_notes,
+        next_due_date
+    ))
+
+    db.commit()
+
+    return redirect(url_for('maintenance', id=id))
+
+
+# Dashboard
+@app.route('/dashboard')
+def dashboard():
+
+    cursor.execute("SELECT COUNT(*) total FROM equipment")
+    total = cursor.fetchone()['total']
 
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS students (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(100) NOT NULL,
-            age INT NOT NULL,
-            grade VARCHAR(20) NOT NULL,
-            profile_image VARCHAR(500),
-            resume VARCHAR(500)
-        )
+    SELECT status,COUNT(*) count
+    FROM equipment
+    GROUP BY status
     """)
 
-    # Add new columns to existing tables without breaking old data
-    for col, coltype in [('profile_image', 'VARCHAR(500)'), ('resume', 'VARCHAR(500)')]:
-        cursor.execute(
-            "SELECT COUNT(*) as cnt FROM information_schema.COLUMNS "
-            "WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='students' AND COLUMN_NAME=%s",
-            (col,)
-        )
-        if cursor.fetchone()['cnt'] == 0:
-            cursor.execute(f"ALTER TABLE students ADD COLUMN {col} {coltype}")
+    status_data = cursor.fetchall()
 
-    mysql.connection.commit()
-    cursor.close()
-    print("Tables ready.")
+    cursor.execute("""
+    SELECT e.equipment_name,
+    m.next_due_date
 
+    FROM equipment e
+    JOIN maintenance_log m
+    ON e.equipment_id=m.equipment_id
 
-with app.app_context():
-    create_tables()
+    WHERE m.next_due_date < CURDATE()
+    """)
 
+    overdue = cursor.fetchall()
 
-@app.route('/')
-def index():
-    cursor = mysql.connection.cursor()
-    cursor.execute("SELECT * FROM students ORDER BY id DESC")
-    students = cursor.fetchall()
-    cursor.close()
-    for student in students:
-        student['profile_image_url'] = presigned_url(student.get('profile_image'))
-        student['resume_url'] = presigned_url(student.get('resume'))
-    return render_template('index.html', students=students)
+    return render_template(
+        "dashboard.html",
+        total=total,
+        status_data=status_data,
+        overdue=overdue
+    )
 
 
-@app.route('/add', methods=['GET', 'POST'])
-def add_student():
-    if request.method == 'POST':
-        name = request.form['name']
-        age = request.form['age']
-        grade = request.form['grade']
-
-        profile_image_key = None
-        resume_key = None
-
-        file = request.files.get('profile_image')
-        if file and file.filename and allowed_image(file.filename):
-            profile_image_key = upload_to_s3(file, 'profile-images')
-
-        file = request.files.get('resume')
-        if file and file.filename and allowed_resume(file.filename):
-            resume_key = upload_to_s3(file, 'resumes')
-
-        cursor = mysql.connection.cursor()
-        cursor.execute(
-            "INSERT INTO students (name, age, grade, profile_image, resume) VALUES (%s, %s, %s, %s, %s)",
-            (name, age, grade, profile_image_key, resume_key)
-        )
-        mysql.connection.commit()
-        cursor.close()
-        return redirect(url_for('index'))
-
-    return render_template('add.html')
-
-
-@app.route('/edit/<int:id>', methods=['GET', 'POST'])
-def edit_student(id):
-    cursor = mysql.connection.cursor()
-
-    if request.method == 'POST':
-        name = request.form['name']
-        age = request.form['age']
-        grade = request.form['grade']
-
-        # Preserve existing S3 keys if no new file is uploaded
-        profile_image_key = request.form.get('existing_profile_image') or None
-        resume_key = request.form.get('existing_resume') or None
-
-        file = request.files.get('profile_image')
-        if file and file.filename and allowed_image(file.filename):
-            profile_image_key = upload_to_s3(file, 'profile-images')
-
-        file = request.files.get('resume')
-        if file and file.filename and allowed_resume(file.filename):
-            resume_key = upload_to_s3(file, 'resumes')
-
-        cursor.execute(
-            "UPDATE students SET name=%s, age=%s, grade=%s, profile_image=%s, resume=%s WHERE id=%s",
-            (name, age, grade, profile_image_key, resume_key, id)
-        )
-        mysql.connection.commit()
-        cursor.close()
-        return redirect(url_for('index'))
-
-    cursor.execute("SELECT * FROM students WHERE id=%s", (id,))
-    student = cursor.fetchone()
-    cursor.close()
-    return render_template('edit.html', student=student)
-
-
-@app.route('/delete/<int:id>')
-def delete_student(id):
-    cursor = mysql.connection.cursor()
-    cursor.execute("DELETE FROM students WHERE id=%s", (id,))
-    mysql.connection.commit()
-    cursor.close()
-    return redirect(url_for('index'))
-
-
-@app.route('/health')
-def health():
-    return {"status": "UP", "database": "CONNECTED"}
-
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+if __name__ == "__main__":
+    app.run(debug=True)

@@ -1,69 +1,123 @@
-{% extends "base.html" %}
-{% block title %}Edit Student | Student Manager{% endblock %}
+{% extends 'base.html' %}
+
 {% block content %}
-<div class="auth-card">
-    <div class="card card-elevated">
-        <div class="card-body p-4 p-md-5">
-            <h1 class="h4 mb-4">Edit Student</h1>
-            <form action="{{ url_for('edit_student', id=student.id) }}" method="POST" enctype="multipart/form-data">
 
-                {# Pass existing S3 keys so they're preserved if no new file is chosen #}
-                <input type="hidden" name="existing_profile_image" value="{{ student.profile_image or '' }}">
-                <input type="hidden" name="existing_resume" value="{{ student.resume or '' }}">
+<div class="card shadow">
 
-                <div class="form-floating mb-3">
-                    <input type="text" class="form-control" id="name" name="name"
-                           placeholder="Name" value="{{ student.name }}" required>
-                    <label for="name">Name</label>
-                </div>
-                <div class="form-floating mb-3">
-                    <input type="number" class="form-control" id="age" name="age"
-                           placeholder="Age" value="{{ student.age }}" required>
-                    <label for="age">Age</label>
-                </div>
-                <div class="form-floating mb-4">
-                    <input type="text" class="form-control" id="grade" name="grade"
-                           placeholder="Grade" value="{{ student.grade }}" required>
-                    <label for="grade">Grade</label>
-                </div>
-
-                <hr class="my-4">
-
-                <div class="mb-3">
-                    <label for="profile_image" class="form-label fw-medium">
-                        <i class="bi bi-image me-1"></i> Profile Image
-                        <span class="text-muted fw-normal">(PNG, JPG, JPEG, GIF, WEBP)</span>
-                    </label>
-                    {% if student.profile_image %}
-                    <p class="small text-success mb-2">
-                        <i class="bi bi-check-circle me-1"></i> Image already uploaded — upload a new one to replace it.
-                    </p>
-                    {% endif %}
-                    <input type="file" class="form-control" id="profile_image" name="profile_image"
-                           accept=".png,.jpg,.jpeg,.gif,.webp">
-                </div>
-                <div class="mb-4">
-                    <label for="resume" class="form-label fw-medium">
-                        <i class="bi bi-file-earmark-text me-1"></i> Resume
-                        <span class="text-muted fw-normal">(PDF, DOC, DOCX)</span>
-                    </label>
-                    {% if student.resume %}
-                    <p class="small text-success mb-2">
-                        <i class="bi bi-check-circle me-1"></i> Resume already uploaded — upload a new one to replace it.
-                    </p>
-                    {% endif %}
-                    <input type="file" class="form-control" id="resume" name="resume"
-                           accept=".pdf,.doc,.docx">
-                </div>
-
-                <div class="d-flex justify-content-end gap-2">
-                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">Cancel</a>
-                    <button type="submit" class="btn btn-primary btn-icon">
-                        <i class="bi bi-check-lg"></i> Update
-                    </button>
-                </div>
-            </form>
-        </div>
+    <div class="card-header bg-primary text-white">
+        <h3>Edit Equipment</h3>
     </div>
+
+    <div class="card-body">
+
+        <form method="POST">
+
+            <div class="mb-3">
+
+                <label class="form-label">
+                    Equipment Name
+                </label>
+
+                <input
+                    type="text"
+                    name="equipment_name"
+                    value="{{ equipment.equipment_name }}"
+                    class="form-control"
+                    required>
+
+            </div>
+
+            <div class="mb-3">
+
+                <label class="form-label">
+                    Serial Number
+                </label>
+
+                <input
+                    type="text"
+                    name="serial_number"
+                    value="{{ equipment.serial_number }}"
+                    class="form-control"
+                    required>
+
+            </div>
+
+            <div class="mb-3">
+
+                <label class="form-label">
+                    Department
+                </label>
+
+                <select
+                    name="department"
+                    class="form-control">
+
+                    <option {% if equipment.department=="ICU" %}selected{% endif %}>ICU</option>
+
+                    <option {% if equipment.department=="Emergency" %}selected{% endif %}>Emergency</option>
+
+                    <option {% if equipment.department=="Pediatrics" %}selected{% endif %}>Pediatrics</option>
+
+                    <option {% if equipment.department=="Radiology" %}selected{% endif %}>Radiology</option>
+
+                    <option {% if equipment.department=="Operation Theatre" %}selected{% endif %}>Operation Theatre</option>
+
+                </select>
+
+            </div>
+
+            <div class="mb-3">
+
+                <label class="form-label">
+                    Purchase Date
+                </label>
+
+                <input
+                    type="date"
+                    name="purchase_date"
+                    value="{{ equipment.purchase_date }}"
+                    class="form-control">
+
+            </div>
+
+            <div class="mb-3">
+
+                <label class="form-label">
+                    Status
+                </label>
+
+                <select
+                    name="status"
+                    class="form-control">
+
+                    <option {% if equipment.status=="Active" %}selected{% endif %}>
+                        Active
+                    </option>
+
+                    <option {% if equipment.status=="Under Maintenance" %}selected{% endif %}>
+                        Under Maintenance
+                    </option>
+
+                    <option {% if equipment.status=="Decommissioned" %}selected{% endif %}>
+                        Decommissioned
+                    </option>
+
+                </select>
+
+            </div>
+
+            <button class="btn btn-primary">
+                Update Equipment
+            </button>
+
+            <a href="/" class="btn btn-secondary">
+                Cancel
+            </a>
+
+        </form>
+
+    </div>
+
 </div>
+
 {% endblock %}

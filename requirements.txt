@@ -1,6 +1,3 @@
 Flask
-Flask-MySQLdb
-python-dotenv
-
-boto3
+mysql-connector-python
 gunicorn
