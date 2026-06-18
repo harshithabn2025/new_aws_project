@@ -4,22 +4,27 @@ from mysql.connector import Error
 from dotenv import load_dotenv
 import os
 
-# Load env variables
+# ---------------- LOAD ENV ----------------
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
 
-# ---------------- DATABASE CONNECTION ----------------
+# ---------------- DATABASE FUNCTION ----------------
 def get_db_connection():
-    return mysql.connector.connect(
-        host=os.getenv("DB_HOST"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
-        database=os.getenv("DB_NAME")
-    )
+    try:
+        conn = mysql.connector.connect(
+            host=os.getenv("DB_HOST"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            database=os.getenv("DB_NAME")
+        )
+        return conn
+    except Error as e:
+        print("❌ MySQL Connection Error:", e)
+        return None
 
-# ---------------- HOME (READ) ----------------
+# ---------------- HOME PAGE (READ) ----------------
 @app.route("/")
 def home():
     db = get_db_connection()
@@ -67,6 +72,7 @@ def edit_equipment(id):
         name = request.form["name"]
         quantity = request.form["quantity"]
 
+        cursor = db.cursor()
         cursor.execute(
             "UPDATE equipment SET name=%s, quantity=%s WHERE id=%s",
             (name, quantity, id)

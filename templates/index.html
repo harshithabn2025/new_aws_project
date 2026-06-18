@@ -1,166 +1,125 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MediTrack Dashboard</title>
+    <style>
+        body {
+            font-family: Arial;
+            margin: 20px;
+            background-color: #f4f6f9;
+        }
 
-{% block content %}
+        h1 {
+            color: #2c3e50;
+        }
 
-<h2 class="mb-4">
-Equipment List
-</h2>
+        .top-bar {
+            margin-bottom: 20px;
+        }
 
-<form method="GET" class="row mb-4">
+        .btn {
+            padding: 10px 15px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
 
-    <div class="col-md-4">
+        .btn:hover {
+            background-color: #2980b9;
+        }
 
-        <input
-            type="text"
-            name="department"
-            class="form-control"
-            placeholder="Department">
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
 
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        th {
+            background-color: #2c3e50;
+            color: white;
+        }
+
+        .action-btn {
+            padding: 5px 10px;
+            text-decoration: none;
+            border-radius: 4px;
+            color: white;
+        }
+
+        .edit {
+            background-color: #f39c12;
+        }
+
+        .delete {
+            background-color: #e74c3c;
+        }
+
+        .edit:hover {
+            background-color: #d68910;
+        }
+
+        .delete:hover {
+            background-color: #c0392b;
+        }
+
+        .flash {
+            padding: 10px;
+            background: #2ecc71;
+            color: white;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>MediTrack Dashboard</h1>
+
+    <!-- FLASH MESSAGE -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for msg in messages %}
+                <div class="flash">{{ msg }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- TOP BUTTON -->
+    <div class="top-bar">
+        <a href="{{ url_for('add_equipment') }}" class="btn">+ Add Equipment</a>
     </div>
 
-    <div class="col-md-4">
-
-        <select
-            name="status"
-            class="form-control">
-
-            <option value="">All Status</option>
-
-            <option>Active</option>
-
-            <option>Under Maintenance</option>
-
-            <option>Decommissioned</option>
-
-        </select>
-
-    </div>
-
-    <div class="col-md-2">
-
-        <button class="btn btn-primary w-100">
-
-            Filter
-
-        </button>
-
-    </div>
-
-    <div class="col-md-2">
-
-        <a href="/" class="btn btn-secondary w-100">
-
-            Reset
-
-        </a>
-
-    </div>
-
-</form>
-
-
-<table class="table table-bordered table-hover">
-
-    <thead class="table-dark">
-
+    <!-- TABLE -->
+    <table>
         <tr>
-
             <th>ID</th>
-
             <th>Name</th>
-
-            <th>Serial Number</th>
-
-            <th>Department</th>
-
-            <th>Purchase Date</th>
-
-            <th>Status</th>
-
+            <th>Quantity</th>
             <th>Actions</th>
-
         </tr>
-
-    </thead>
-
-    <tbody>
 
         {% for item in equipment %}
-
         <tr>
-
-            <td>{{ item.equipment_id }}</td>
-
-            <td>{{ item.equipment_name }}</td>
-
-            <td>{{ item.serial_number }}</td>
-
-            <td>{{ item.department }}</td>
-
-            <td>{{ item.purchase_date }}</td>
-
+            <td>{{ item.id }}</td>
+            <td>{{ item.name }}</td>
+            <td>{{ item.quantity }}</td>
             <td>
-
-                {% if item.status=="Active" %}
-
-                <span class="badge bg-success">
-
-                    {{ item.status }}
-
-                </span>
-
-                {% elif item.status=="Under Maintenance" %}
-
-                <span class="badge bg-warning text-dark">
-
-                    {{ item.status }}
-
-                </span>
-
-                {% else %}
-
-                <span class="badge bg-danger">
-
-                    {{ item.status }}
-
-                </span>
-
-                {% endif %}
-
+                <a href="{{ url_for('edit_equipment', id=item.id) }}" class="action-btn edit">Edit</a>
+                <a href="{{ url_for('delete_equipment', id=item.id) }}" class="action-btn delete"
+                   onclick="return confirm('Are you sure?')">Delete</a>
             </td>
-
-            <td>
-
-                <a href="/edit/{{ item.equipment_id }}"
-                   class="btn btn-primary btn-sm">
-
-                    Edit
-
-                </a>
-
-                <a href="/delete/{{ item.equipment_id }}"
-                   class="btn btn-danger btn-sm"
-                   onclick="return confirm('Delete Equipment?')">
-
-                    Delete
-
-                </a>
-
-                <a href="/maintenance/{{ item.equipment_id }}"
-                   class="btn btn-success btn-sm">
-
-                    Maintenance
-
-                </a>
-
-            </td>
-
         </tr>
-
         {% endfor %}
 
-    </tbody>
+    </table>
 
-</table>
-
-{% endblock %}
+</body>
+</html>
