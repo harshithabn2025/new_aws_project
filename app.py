@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 import mysql.connector
+from mysql.connector import Error
 from dotenv import load_dotenv
 import os
 
