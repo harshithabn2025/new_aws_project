@@ -20,69 +20,34 @@ def dashboard():
         """)
         status_counts = cursor.fetchall()
 
-        cursor.execute("""
-            SELECT e.equipment_id, e.equipment_name, e.serial_number, e.department,
-                   MAX(m.next_due_date) AS next_due_date
-            FROM equipment e
-            JOIN maintenance_log m ON e.equipment_id = m.equipment_id
-            GROUP BY e.equipment_id, e.equipment_name, e.serial_number, e.department
-            HAVING MAX(m.next_due_date) < CURDATE()
-        """)
-        overdue_items = cursor.fetchall()
-
     conn.close()
 
     return render_template(
         "dashboard.html",
         total_equipment=total_equipment,
-        status_counts=status_counts,
-        overdue_items=overdue_items
+        status_counts=status_counts
     )
 
 
 # ---------------- EQUIPMENT LIST ----------------
 @app.route("/equipment")
 def equipment_list():
-    department = request.args.get("department", "")
-    status = request.args.get("status", "")
-
     conn = get_connection()
     with conn.cursor() as cursor:
-
-        query = "SELECT * FROM equipment WHERE 1=1"
-        params = []
-
-        if department:
-            query += " AND department = %s"
-            params.append(department)
-
-        if status:
-            query += " AND status = %s"
-            params.append(status)
-
-        query += " ORDER BY equipment_id DESC"
-
-        cursor.execute(query, params)
+        cursor.execute("SELECT * FROM equipment ORDER BY equipment_id DESC")
         equipment = cursor.fetchall()
-
-        cursor.execute("SELECT DISTINCT department FROM equipment")
-        departments = cursor.fetchall()
 
     conn.close()
 
-    return render_template(
-        "equipment_list.html",
-        equipment=equipment,
-        departments=departments,
-        selected_department=department,
-        selected_status=status
-    )
+    return render_template("equipment_list.html", equipment=equipment)
 
 
 # ---------------- ADD EQUIPMENT ----------------
 @app.route("/equipment/add", methods=["GET", "POST"])
 def add_equipment():
     if request.method == "POST":
+
+        # ✅ MUST MATCH HTML name=""
         equipment_name = request.form["equipment_name"]
         serial_number = request.form["serial_number"]
         department = request.form["department"]
@@ -92,7 +57,7 @@ def add_equipment():
         conn = get_connection()
         with conn.cursor() as cursor:
             cursor.execute("""
-                INSERT INTO equipment 
+                INSERT INTO equipment
                 (equipment_name, serial_number, department, purchase_date, status)
                 VALUES (%s, %s, %s, %s, %s)
             """, (equipment_name, serial_number, department, purchase_date, status))
@@ -111,105 +76,20 @@ def equipment_detail(equipment_id):
     conn = get_connection()
     with conn.cursor() as cursor:
 
-        cursor.execute("SELECT * FROM equipment WHERE equipment_id = %s", (equipment_id,))
+        cursor.execute("SELECT * FROM equipment WHERE equipment_id=%s", (equipment_id,))
         equipment = cursor.fetchone()
 
-        cursor.execute("""
-            SELECT * FROM maintenance_log
-            WHERE equipment_id = %s
-            ORDER BY maintenance_date DESC
-        """, (equipment_id,))
-        maintenance_logs = cursor.fetchall()
-
     conn.close()
 
-    return render_template(
-        "equipment_detail.html",
-        equipment=equipment,
-        maintenance_logs=maintenance_logs
-    )
+    return render_template("equipment_detail.html", equipment=equipment)
 
 
-# ---------------- ADD MAINTENANCE ----------------
-@app.route("/maintenance/add/<int:equipment_id>", methods=["GET", "POST"])
-def add_maintenance(equipment_id):
-    conn = get_connection()
-
-    with conn.cursor() as cursor:
-        cursor.execute("SELECT * FROM equipment WHERE equipment_id = %s", (equipment_id,))
-        equipment = cursor.fetchone()
-
-    if request.method == "POST":
-        maintenance_date = request.form["maintenance_date"]
-        technician_name = request.form["technician_name"]
-        issue_reported = request.form["issue_reported"]
-        resolution_notes = request.form["resolution_notes"]
-        next_due_date = request.form["next_due_date"]
-
-        with conn.cursor() as cursor:
-            cursor.execute("""
-                INSERT INTO maintenance_log
-                (equipment_id, maintenance_date, technician_name, issue_reported, resolution_notes, next_due_date)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """, (
-                equipment_id,
-                maintenance_date,
-                technician_name,
-                issue_reported,
-                resolution_notes,
-                next_due_date
-            ))
-
-        conn.commit()
-        conn.close()
-
-        return redirect(url_for("equipment_detail", equipment_id=equipment_id))
-
-    conn.close()
-
-    return render_template("add_maintenance.html", equipment=equipment)
+# ---------------- API ----------------
+@app.route("/api/health")
+def health():
+    return jsonify({"status": "running"})
 
 
-# ---------------- UPDATE STATUS ----------------
-@app.route("/equipment/update-status/<int:equipment_id>", methods=["POST"])
-def update_status(equipment_id):
-    new_status = request.form["status"]
-
-    conn = get_connection()
-    with conn.cursor() as cursor:
-        cursor.execute("""
-            UPDATE equipment
-            SET status = %s
-            WHERE equipment_id = %s
-        """, (new_status, equipment_id))
-
-    conn.commit()
-    conn.close()
-
-    return redirect(url_for("equipment_detail", equipment_id=equipment_id))
-
-
-# ---------------- API: OVERDUE ----------------
-@app.route("/api/overdue")
-def overdue_json():
-    conn = get_connection()
-    with conn.cursor() as cursor:
-
-        cursor.execute("""
-            SELECT e.equipment_id, e.equipment_name, e.serial_number, e.department,
-                   MAX(m.next_due_date) AS next_due_date
-            FROM equipment e
-            JOIN maintenance_log m ON e.equipment_id = m.equipment_id
-            GROUP BY e.equipment_id, e.equipment_name, e.serial_number, e.department
-            HAVING MAX(m.next_due_date) < CURDATE()
-        """)
-
-        overdue_items = cursor.fetchall()
-
-    conn.close()
-    return jsonify(overdue_items)
-
-
-# ---------------- RUN APP (IMPORTANT FOR EC2) ----------------
+# ---------------- RUN ----------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

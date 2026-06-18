@@ -1,28 +1,31 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Equipment</title>
+</head>
 
-{% block content %}
+<body>
+
 <h2>Add Equipment</h2>
 
-<form method="POST" class="card">
-    <label>Equipment Name</label>
-    <input type="text" name="equipment_name" required>
+<form method="POST">
 
-    <label>Serial Number</label>
-    <input type="text" name="serial_number" required>
+    <input type="text" name="equipment_name" placeholder="Equipment Name" required><br><br>
 
-    <label>Department</label>
-    <input type="text" name="department" required>
+    <input type="text" name="serial_number" placeholder="Serial Number" required><br><br>
 
-    <label>Purchase Date</label>
-    <input type="date" name="purchase_date" required>
+    <input type="text" name="department" placeholder="Department" required><br><br>
 
-    <label>Status</label>
-    <select name="status" required>
+    <input type="date" name="purchase_date" required><br><br>
+
+    <select name="status">
         <option value="Active">Active</option>
         <option value="Under Maintenance">Under Maintenance</option>
-        <option value="Decommissioned">Decommissioned</option>
-    </select>
+    </select><br><br>
 
-    <button type="submit">Add Equipment</button>
+    <button type="submit">Save</button>
+
 </form>
-{% endblock %}
+
+</body>
+</html>
