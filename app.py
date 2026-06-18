@@ -3,10 +3,13 @@ from db import get_connection
 
 app = Flask(__name__)
 
+
+# ---------------- DASHBOARD ----------------
 @app.route("/")
 def dashboard():
     conn = get_connection()
     with conn.cursor() as cursor:
+
         cursor.execute("SELECT COUNT(*) AS total FROM equipment")
         total_equipment = cursor.fetchone()["total"]
 
@@ -28,6 +31,7 @@ def dashboard():
         overdue_items = cursor.fetchall()
 
     conn.close()
+
     return render_template(
         "dashboard.html",
         total_equipment=total_equipment,
@@ -35,6 +39,8 @@ def dashboard():
         overdue_items=overdue_items
     )
 
+
+# ---------------- EQUIPMENT LIST ----------------
 @app.route("/equipment")
 def equipment_list():
     department = request.args.get("department", "")
@@ -42,6 +48,7 @@ def equipment_list():
 
     conn = get_connection()
     with conn.cursor() as cursor:
+
         query = "SELECT * FROM equipment WHERE 1=1"
         params = []
 
@@ -54,6 +61,7 @@ def equipment_list():
             params.append(status)
 
         query += " ORDER BY equipment_id DESC"
+
         cursor.execute(query, params)
         equipment = cursor.fetchall()
 
@@ -61,6 +69,7 @@ def equipment_list():
         departments = cursor.fetchall()
 
     conn.close()
+
     return render_template(
         "equipment_list.html",
         equipment=equipment,
@@ -69,6 +78,8 @@ def equipment_list():
         selected_status=status
     )
 
+
+# ---------------- ADD EQUIPMENT ----------------
 @app.route("/equipment/add", methods=["GET", "POST"])
 def add_equipment():
     if request.method == "POST":
@@ -81,19 +92,25 @@ def add_equipment():
         conn = get_connection()
         with conn.cursor() as cursor:
             cursor.execute("""
-                INSERT INTO equipment (equipment_name, serial_number, department, purchase_date, status)
+                INSERT INTO equipment 
+                (equipment_name, serial_number, department, purchase_date, status)
                 VALUES (%s, %s, %s, %s, %s)
             """, (equipment_name, serial_number, department, purchase_date, status))
+
+        conn.commit()
         conn.close()
 
         return redirect(url_for("equipment_list"))
 
     return render_template("add_equipment.html")
 
+
+# ---------------- EQUIPMENT DETAIL ----------------
 @app.route("/equipment/<int:equipment_id>")
 def equipment_detail(equipment_id):
     conn = get_connection()
     with conn.cursor() as cursor:
+
         cursor.execute("SELECT * FROM equipment WHERE equipment_id = %s", (equipment_id,))
         equipment = cursor.fetchone()
 
@@ -105,15 +122,19 @@ def equipment_detail(equipment_id):
         maintenance_logs = cursor.fetchall()
 
     conn.close()
+
     return render_template(
         "equipment_detail.html",
         equipment=equipment,
         maintenance_logs=maintenance_logs
     )
 
+
+# ---------------- ADD MAINTENANCE ----------------
 @app.route("/maintenance/add/<int:equipment_id>", methods=["GET", "POST"])
 def add_maintenance(equipment_id):
     conn = get_connection()
+
     with conn.cursor() as cursor:
         cursor.execute("SELECT * FROM equipment WHERE equipment_id = %s", (equipment_id,))
         equipment = cursor.fetchone()
@@ -131,15 +152,25 @@ def add_maintenance(equipment_id):
                 (equipment_id, maintenance_date, technician_name, issue_reported, resolution_notes, next_due_date)
                 VALUES (%s, %s, %s, %s, %s, %s)
             """, (
-                equipment_id, maintenance_date, technician_name,
-                issue_reported, resolution_notes, next_due_date
+                equipment_id,
+                maintenance_date,
+                technician_name,
+                issue_reported,
+                resolution_notes,
+                next_due_date
             ))
+
+        conn.commit()
         conn.close()
+
         return redirect(url_for("equipment_detail", equipment_id=equipment_id))
 
     conn.close()
+
     return render_template("add_maintenance.html", equipment=equipment)
 
+
+# ---------------- UPDATE STATUS ----------------
 @app.route("/equipment/update-status/<int:equipment_id>", methods=["POST"])
 def update_status(equipment_id):
     new_status = request.form["status"]
@@ -151,14 +182,19 @@ def update_status(equipment_id):
             SET status = %s
             WHERE equipment_id = %s
         """, (new_status, equipment_id))
+
+    conn.commit()
     conn.close()
 
     return redirect(url_for("equipment_detail", equipment_id=equipment_id))
 
+
+# ---------------- API: OVERDUE ----------------
 @app.route("/api/overdue")
 def overdue_json():
     conn = get_connection()
     with conn.cursor() as cursor:
+
         cursor.execute("""
             SELECT e.equipment_id, e.equipment_name, e.serial_number, e.department,
                    MAX(m.next_due_date) AS next_due_date
@@ -167,9 +203,13 @@ def overdue_json():
             GROUP BY e.equipment_id, e.equipment_name, e.serial_number, e.department
             HAVING MAX(m.next_due_date) < CURDATE()
         """)
+
         overdue_items = cursor.fetchall()
+
     conn.close()
     return jsonify(overdue_items)
 
+
+# ---------------- RUN APP (IMPORTANT FOR EC2) ----------------
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
