@@ -1,51 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MediTrack</title>
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-
 <body>
-
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container">
-
-        <a class="navbar-brand fw-bold" href="/">
-            🏥 MediTrack
-        </a>
-
+    <nav>
+        <h1>MediTrack</h1>
         <div>
-
-            <a href="/" class="btn btn-light btn-sm">
-                Home
-            </a>
-
-            <a href="/add" class="btn btn-success btn-sm">
-                Add Equipment
-            </a>
-
-            <a href="/dashboard" class="btn btn-warning btn-sm">
-                Dashboard
-            </a>
-
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('equipment_list') }}">Equipment</a>
+            <a href="{{ url_for('add_equipment') }}">Add Equipment</a>
         </div>
+    </nav>
 
-    </div>
-</nav>
-
-
-<div class="container mt-4">
-
-    {% block content %}
-
-    {% endblock %}
-
-</div>
-
+    <main>
+        {% block content %}{% endblock %}
+    </main>
 </body>
 </html>

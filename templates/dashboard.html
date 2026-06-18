@@ -1,90 +1,43 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<h2>Dashboard</h2>
 
-<h2 class="mb-4">Hospital Equipment Dashboard</h2>
-
-<div class="row">
-
-    <div class="col-md-4">
-        <div class="card bg-primary text-white">
-            <div class="card-body">
-                <h5>Total Equipment</h5>
-                <h2>{{ total or 0 }}</h2>
-            </div>
-        </div>
-    </div>
-
-</div>
-
-<br>
-
-<!-- STATUS SUMMARY -->
-<div class="card mb-4">
-
-    <div class="card-header bg-success text-white">
-        Equipment Status Summary
-    </div>
-
-    <table class="table table-bordered table-hover">
-        <thead>
-            <tr>
-                <th>Status</th>
-                <th>Count</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            {% if status_data %}
-                {% for row in status_data %}
-                <tr>
-                    <td>{{ row.status }}</td>
-                    <td>{{ row.count }}</td>
-                </tr>
-                {% endfor %}
-            {% else %}
-                <tr>
-                    <td colspan="2">No data available</td>
-                </tr>
-            {% endif %}
-        </tbody>
-
-    </table>
-</div>
-
-<!-- OVERDUE MAINTENANCE -->
 <div class="card">
+    <h3>Total Equipment</h3>
+    <p>{{ total_equipment }}</p>
+</div>
 
-    <div class="card-header bg-danger text-white">
-        Overdue Maintenance
-    </div>
+<div class="card">
+    <h3>Count by Status</h3>
+    <ul>
+        {% for row in status_counts %}
+            <li>{{ row.status }}: {{ row.count }}</li>
+        {% endfor %}
+    </ul>
+</div>
 
-    <table class="table table-bordered table-hover">
-
-        <thead>
+<div class="card">
+    <h3>Overdue Maintenance</h3>
+    {% if overdue_items %}
+        <table>
             <tr>
-                <th>Equipment</th>
+                <th>Name</th>
+                <th>Serial</th>
+                <th>Department</th>
                 <th>Next Due Date</th>
             </tr>
-        </thead>
-
-        <tbody>
-            {% if overdue %}
-                {% for item in overdue %}
-                <tr>
-                    <td>{{ item.equipment_name }}</td>
-                    <td>{{ item.next_due_date }}</td>
-                </tr>
-                {% endfor %}
-            {% else %}
-                <tr>
-                    <td colspan="2">No overdue maintenance</td>
-                </tr>
-            {% endif %}
-        </tbody>
-
-    </table>
-
+            {% for item in overdue_items %}
+            <tr>
+                <td><a href="{{ url_for('equipment_detail', equipment_id=item.equipment_id) }}">{{ item.equipment_name }}</a></td>
+                <td>{{ item.serial_number }}</td>
+                <td>{{ item.department }}</td>
+                <td>{{ item.next_due_date }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No overdue items.</p>
+    {% endif %}
 </div>
-
 {% endblock %}
